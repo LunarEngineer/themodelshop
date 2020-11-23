@@ -21,7 +21,7 @@ When presented with your problem the manager will hire in one of two ways. It wi
 
 The manager will approach each agent it desires in the labor pool and will offer them a salary of wages ($w$) that is inversely proportionate to how capable they are at minimizing Mean Squared Percentile Loss.
 
-### Harmonic Percentile Error
+### Harmonic Percentile Error (HPE)
 
 TODO: Come back to this and write formulas down, but this needs to be mean squared percentile error.
 
