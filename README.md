@@ -1,5 +1,7 @@
 # The Model Shop
 
+[Active Development](todo.md)
+
 What is this? This is an algorithm which will, given an input set of n variables, train a team of data scientists to solve your problem.
 
 The way it accomplishes this is by constructing a Company, which is a construct of multiple, independent, and cooperating (to a point) agents, which include:
