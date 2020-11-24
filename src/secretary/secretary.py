@@ -6,12 +6,14 @@ class Secretary():
 
     The Secretary maintains paperwork for all agents, including which
     agents were hired, what variables they purchased and in what
-    order. The Secretary can be queried for information at any time and, in addition, can provide running statistics.
+    order. The Secretary can be queried for information at any time
+    and, in addition, can provide running statistics.
     """
     # What is the Secretary keeping track of?
     # 1) The labor pool
     # 2) Active employees
     # 3) Employee Transaction History
+    # 4) Datasets!
     def __init__(
         self,
         laborpool='default_pool',
@@ -32,36 +34,34 @@ class Secretary():
 
     def hire_employee(self,employee):
         # This creates an agent
-        pass
+        raise NotImplementedError
 
     def fire_employee(self,employee):
         # This removes the agent
-        pass
+        raise NotImplementedError
 
     def employee_report(self):
         # This reports statistics on the employees in the pool
-        pass
+        raise NotImplementedError
 
     ################################################################
     # Data management
     #   1. init_papers
     #   2. file_papers
-    #   3. audit_papers
+    #   3. audit_employee
     ################################################################
     def init_papers(self):
         # This is taking the dataset that's fed to the model shop.
         # It computes some initial, simple, statistics for each
         #   feature and stores all of this information in a
         #   large numpy array.
-        self.filing_cabinet = nparray([])
-        pass
+        raise NotImplementedError
 
     def file_papers(
         self,
         information
     ):
-        # This stores experiment information by updating
-        pass
+        raise NotImplementedError
 
-    def audit_papers(self):
-        pass
+    def audit_employee(self):
+        raise NotImplementedError
