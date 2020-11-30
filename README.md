@@ -13,6 +13,21 @@ The way it accomplishes this is by constructing a Company, which is a construct 
 * The Company Store: A construct that maintains the Market.
 * The Market: A storefront where the modeling employees may purchase from the variables within the target dataset.
 
+## The Secretary
+
+The Secretary maintains paperwork for all agents, including which agents were hired, what variables they purchased and in what order. The Secretary can be queried for information at any time and, in addition, can provide running statistics.
+
+### Filing Cabinets
+
+A filing cabinet is used by a Secretary to disburse data, reward, and warehouse information upon request.
+
+This is essentially a simple feature store containing the data you've predicted to be most optimally suited for solving your business problem.
+
+You can currently provide that as either a local filepath or an S3 location. This assumes appropriate access to components is defined and in-place and does not currently support encryption in and of itself.
+Short term goals are to implement TLS such that the agent can independentally prevent unknown substitution of actors.
+
+This will be a high effort task either whenever I get arsed to do it because *I* need it, or some kind soul takes the time to issue a pull request coupled with an in-depth code review.
+
 ## The Manager
 
 The manager reviews contracts and hires skilled labor from the workforce. The manager is given a budget that is capable of maintaining a fixed number of employees ($m$) that will fill a labor pool ($M$).
@@ -40,10 +55,6 @@ When a modeler finishes their contract the manager fires the modeler on the spot
 ## The Worker Pool
 
 The worker pool $M$ has $n_m$ potential agents in it storing their statistics; each agent stores the MSPE of its progenitor model and a random integer which is passed to a fuzzing algorithm if that agent is hired. During each hiring activity modelers are drawn from a softmax distributional function of the MSPE of the agents. When an agent leaves the pool it gains a 'personality' by running through a 'fuzzing' algorithm which inserts noise into the weights of the original agent architecture.
-
-## The Secretary
-
-The Secretary maintains paperwork for all agents, including which agents were hired, what variables they purchased and in what order. The Secretary can be queried for information at any time and, in addition, can provide running statistics.
 
 ## The Company Store
 
@@ -91,4 +102,41 @@ The modelers get to run a twelve month contract where they're training models on
 
 This environment is a k+2 dimensional structure where k is the list of statistics you wish to keep. The 2n elements are derived from combinations of all n variables in the dataset.
 
-# MPI in Python.
+## MPI in Python, URSA Labs, and more
+
+This is something to think about and talk about.
+
+What is the *goal* here?
+
+The *goal* is to produce models quickly and efficiently and learn to minimize cost in model development to produce simple models quickly which accurately account for variance in outcome.
+
+As part of this we need to:
+
+1. Minimize the impact of 'talk' time. Each algorithm is going to communicate with other agents and communicate with the manager and secretary. What's the most efficient way for them to do that?
+2. Minimize the in-memory footprint. Everything is essentially looking at a *single* dataset. Even transformations that we add are going to be tacked on to the original dataset.
+3. The reward we want to assign agents is commensurate to cost and all models run need to be associated with cost. Every simple algorithm an agent can run, including adding transformations, needs to be tagged with cost.
+
+
+Can Arrow solve all the problems?
+
+Looking at Flight it might 'solve' the talk time problems.
+
+## TODO
+
+Here you go, use case 1. I need to generate a large dataset and test using Arrow to hold all the data with Flight to farm it out. Does that do a sufficient job that we could then joblib map the data out and see appreciable cost savings in terms of computation and storage requirements?
+
+Since Ray is essentially already doing this, can we leverage Ray?
+
+We could bake Ray in from the beginning, right?
+
+Looking at this the answer appears to be *yes*.
+
+Without spending too much time looking down into the weeds it looks like we could get away with setting this up as a custom environment (multi-agent cooperative).
+
+Yay!
+
+We need to be able to generalize, so the environment needs to be saving 'modelers'.
+
+### Transformer
+
+There needs to be a transformer algorithm which is going to be a neural net which takes a dataset and columns and builds a model which outputs a feature.

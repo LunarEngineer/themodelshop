@@ -1,5 +1,10 @@
+import argparse
+import pyarrow.flight as fl
+import sys
 from numpy import array as nparray
+from typing import Dict
 
+from secretary.filecabinet import FileCabinet
 
 class Secretary():
     """
@@ -50,18 +55,93 @@ class Secretary():
     #   2. file_papers
     #   3. audit_employee
     ################################################################
-    def init_papers(self):
+    def init_papers(
+        self,
+        dataset_metadata: Dict[str,Dict[str,str]] = None
+    ):
         # This is taking the dataset that's fed to the model shop.
         # It computes some initial, simple, statistics for each
         #   feature and stores all of this information in a
         #   large numpy array.
-        raise NotImplementedError
+        # This is the place to bake in security.
+        self._cabinet = FileCabinet(dataset_metadata=dataset_metadata)
 
+    def get_papers(
+        self,
+        requested_information: Dict[str,str]
+    ):
+        pass
     def file_papers(
         self,
         information
     ):
+        """Publishes data to the filing cabinet
+        
+        This takes information in and dispurses it appropriately
+        depending on the intended action.
+
+        What that *means* is that the algorithm is going to scrape
+        the data utilities when appropriate to look for means and
+        methods of publishing the data. If there is a 'publish_dataset'
+        function available in the environment, it will choose to
+        attempt to use that function along with any arguments passed
+        in.
+
+        Datasets can be pushed to the feature store in this way and
+        the transformations need to be tagged appropriately such
+        that specific individuals with appropriate access can change
+        data upon request while still preventing a critical data
+        overwrite.
+        """
+
         raise NotImplementedError
 
     def audit_employee(self):
         raise NotImplementedError
+
+
+def print_response(data):
+    print("=== Response ===")
+    print(data)
+    print("================")
+
+def get_by_ticket(args, client):
+    ticket_name = args.name
+    response = client.do_get(fl.Ticket(ticket_name)).read_all()
+    print_response(response)
+
+def get_by_ticket_pandas(args, client):
+    ticket_name = args.name
+    response = client.do_get(fl.Ticket(ticket_name)).read_pandas()
+    print_response(response)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    subcommands = parser.add_subparsers()
+
+    cmd_get_by_t = subcommands.add_parser('get_by_ticket')
+    cmd_get_by_t.set_defaults(action='get_by_ticket')
+    cmd_get_by_t.add_argument('-n', '--name', type=str, help="Name of the ticket to fetch.")
+
+    cmd_get_by_tp = subcommands.add_parser('get_by_ticket_pandas')
+    cmd_get_by_tp.set_defaults(action='get_by_ticket_pandas')
+    cmd_get_by_tp.add_argument('-n', '--name', type=str, help="Name of the ticket to fetch.")
+
+    args = parser.parse_args()
+    if not hasattr(args, 'action'):
+        parser.print_help()
+        sys.exit(1)
+
+    commands = {
+        'get_by_ticket': get_by_ticket,
+        'get_by_ticket_pandas': get_by_ticket_pandas,
+    }
+
+    client = fl.connect("grpc://0.0.0.0:8815")
+
+    commands[args.action](args, client)
+
+
+if __name__ == '__main__':
+    main()
