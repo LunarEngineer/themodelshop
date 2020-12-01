@@ -2,7 +2,7 @@
 
 ## Active Development
 
-1. Get the Docker container up and running and go grab some datasets to use for testing.
+1. Go grab some datasets to use for testing.
 2. Get the Secretary and filing cabinet into a rudimentary active state.
 
 ## Near Future Development

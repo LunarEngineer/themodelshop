@@ -17,6 +17,8 @@ The way it accomplishes this is by constructing a Company, which is a construct 
 
 The Secretary maintains paperwork for all agents, including which agents were hired, what variables they purchased and in what order. The Secretary can be queried for information at any time and, in addition, can provide running statistics.
 
+The secretary is ensuring that desired statistics are kept up to date
+
 ### Filing Cabinets
 
 A filing cabinet is used by a Secretary to disburse data, reward, and warehouse information upon request.

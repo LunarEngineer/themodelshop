@@ -6,7 +6,7 @@ authors = ["timothy d luna <timothy.d.luna@gmail.com>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "3.9.0"
+python = "3.8.5"
 numpy = "^1.19.4"
 pyarrow = "^2.0.0"
 scikit-learn = "^0.23.2"

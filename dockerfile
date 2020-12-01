@@ -1,4 +1,4 @@
-FROM python:3.9.0-slim as python-base
+FROM python:3.8.5-slim as python-base
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -24,6 +24,8 @@ RUN apt-get update \
         # deps for building python deps
         build-essential \
         gcc
+
+RUN pip install --upgrade setuptools pip
 
 # install poetry - respects $POETRY_VERSION & $POETRY_HOME
 ENV POETRY_VERSION=1.1.4
