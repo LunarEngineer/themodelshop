@@ -4,6 +4,7 @@
 
 1. Go grab some datasets to use for testing.
 2. Get the Secretary and filing cabinet into a rudimentary active state.
+3. Get the dataset generator up and running.
 
 ## Near Future Development
 

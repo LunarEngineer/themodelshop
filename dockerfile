@@ -23,7 +23,10 @@ RUN apt-get update \
         curl \
         # deps for building python deps
         build-essential \
-        gcc
+        gcc \
+        # This is in here for development purposes only.
+        # When this goes live it needs to be removed (most likely)
+        git
 
 RUN pip install --upgrade setuptools pip
 
@@ -34,10 +37,10 @@ RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-
 # copy project requirement files here to ensure they will be cached.
 WORKDIR $PYSETUP_PATH
 COPY pyproject.toml ./
-COPY src /src
+COPY themodelshop /themodelshop
 
 # install runtime deps - uses $POETRY_VIRTUALENVS_IN_PROJECT internally
-RUN poetry install --no-dev
+RUN poetry install --no-dev --no-root
 
 # `development` image is used during development / testing
 # FROM python-base as development

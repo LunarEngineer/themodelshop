@@ -26,7 +26,7 @@ A filing cabinet is used by a Secretary to disburse data, reward, and warehouse 
 This is essentially a simple feature store containing the data you've predicted to be most optimally suited for solving your business problem.
 
 You can currently provide that as either a local filepath or an S3 location. This assumes appropriate access to components is defined and in-place and does not currently support encryption in and of itself.
-Short term goals are to implement TLS such that the agent can independentally prevent unknown substitution of actors.
+A long term goal is to implement TLS such that the agent can independentally prevent unknown substitution of actors.
 
 This will be a high effort task either whenever I get arsed to do it because *I* need it, or some kind soul takes the time to issue a pull request coupled with an in-depth code review.
 
@@ -69,6 +69,10 @@ The company store maintains the store front from which the Modelers are allowed 
 All these statistics are calculated for all variables from the last 1000 models run, which are stored in a communally accessible data structure.
 
 Overall the effect is that variables which are predictive are cheap. Variables which haven't been touched in awhile are cheap. Variables which contribute to simpler models are cheap.
+
+This needs to be extensible *enough* that in the init routine for the Company Store class you may pass a list of reward functions which are scrapeable in the environment: i.e. the user (or an algorithm) can call def show_signals, will get a list of functions in response, and then can choose to combine those either with a named function which can be scraped from def show_experiment (definitely negotiable) or a custom function passed in init.
+
+This should bake in any flexibility the algorithm needs in the future.
 
 ### Recent Mean Loss Differential
 
@@ -117,7 +121,6 @@ As part of this we need to:
 1. Minimize the impact of 'talk' time. Each algorithm is going to communicate with other agents and communicate with the manager and secretary. What's the most efficient way for them to do that?
 2. Minimize the in-memory footprint. Everything is essentially looking at a *single* dataset. Even transformations that we add are going to be tacked on to the original dataset.
 3. The reward we want to assign agents is commensurate to cost and all models run need to be associated with cost. Every simple algorithm an agent can run, including adding transformations, needs to be tagged with cost.
-
 
 Can Arrow solve all the problems?
 

@@ -4,6 +4,9 @@ version = "0.1.0"
 description = "Learning to learn to learn..."
 authors = ["timothy d luna <timothy.d.luna@gmail.com>"]
 license = "MIT"
+packages = [
+    { include = "themodelshop"}
+]
 
 [tool.poetry.dependencies]
 python = "3.8.5"
@@ -11,6 +14,10 @@ numpy = "^1.19.4"
 pyarrow = "^2.0.0"
 scikit-learn = "^0.23.2"
 pandas = "^1.1.4"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.1.2"
+bandit = "^1.6.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.10"]
