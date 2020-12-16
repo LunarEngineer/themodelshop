@@ -23,6 +23,8 @@ Design requirements:
 5. The problem domain can be drawn from segmentation / classification,
 
 This is going to be required to generate high quality datasets on demand.
+
+Come back to this after the secretary work is complete.
 """
 from sklearn.datasets import (
     make_classification,
@@ -110,3 +112,4 @@ class DataGenerator():
             shuffle=True,
             random_state=None
         )
+#p

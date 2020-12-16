@@ -19,3 +19,14 @@ Yay!
 ### [Apache Arrow](https://arrow.apache.org/docs/python/)
 
 Arrow provides a way for reading datasets which might be *quite* large!
+
+## Different APIs for Different Customers
+
+The end-goal of the Secretary development is to have a single construct which can sit on top of a filing cabinet.
+It can sit on top of an already existing filing cabinet, or it could create a new one as part of a project.
+
+It exposes an API to query team performance results (managers love this information.)
+It exposes an API to query datasets (for modelers.)
+It exposes an API to query experiment results (for modelers.)
+
+It will expose more API over time, but the intent is that the Secretary is tailorable, while the Filing Cabinet is fairly static.

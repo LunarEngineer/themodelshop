@@ -41,29 +41,6 @@ from typing import (
 
 # https://mirai-solutions.ch/news/2020/06/11/apache-arrow-flight-tutorial/
 
-# class File():
-#     """
-
-#     """
-#     def __init__(self):
-#         self._data = {}
-#         #pq.read_table("s3://my-bucket/data.parquet")
-#     def read(self):
-#         return self._read()
-#     def _read(self):
-#         raise NotImplementedError("Base class: To be overloaded.")
-
-
-# class FileNumpy(File):
-#     """
-#     """
-#     def __init__(self,filepath):
-#         self._data['filepath'] = filepath
-
-#     def _read(self):
-#         raise NotImplementedError
-
-
 
 class FileCabinet(fl.FlightServerBase):
     """Maintains records for *seen* data for a project.
@@ -88,6 +65,10 @@ class FileCabinet(fl.FlightServerBase):
 
     The filing cabinet can be queried at any time by the secretary
     to pull back datasets.
+
+    This can spin up a GRPC server.
+
+    This can spin up a 
 
     Parameters
     ----------
@@ -117,9 +98,12 @@ class FileCabinet(fl.FlightServerBase):
         self,
         location: str = "grpc://0.0.0.0:8815",
         dataset_metadata: Dict[str,Dict[str,str]] = None,
+        grpc_on: bool = False
         **kwargs
     ):
-        super(FileCabinet, self).__init__(location, **kwargs)
+        # super(FileCabinet, self).__init__(location, **kwargs)
+        # Pass these along to the Flight Server Base
+        super().__init__(location, **kwargs)
         # This is going to get populated by the metadata, if passed.
 
         self._named_datasets = {}
@@ -175,6 +159,7 @@ class FileCabinet(fl.FlightServerBase):
         function_kwargs: Dict[str,Any]
     ):
         # TODO: Use inspect to scrape functions from named user modules.
+        # TODO: This needs to pull the function from the data utils
         function = None
         # Get that function and return it as a lambda function.
         raise NotImplementedError
@@ -189,6 +174,7 @@ class FileCabinet(fl.FlightServerBase):
         """
         table = self.tables[ticket.ticket]
         return fl.RecordBatchStream(table)
+
     def _get():
         pass
     def _put():
