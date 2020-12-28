@@ -1,5 +1,13 @@
 # The Model Shop
 
+Helpful Links:
+
+* [Trello](https://trello.com/lunarindustries)
+* [Arrow](https://arrow.apache.org/docs/python/pandas.html)
+* [Arrow tutorial](https://mirai-solutions.ch/news/2020/06/11/apache-arrow-flight-tutorial/)
+* [SKLearn Datasets](https://scikit-learn.org/stable/modules/classes.html#module-sklearn.datasets)
+
+
 [Active Development](todo.md)
 
 What is this? This is an algorithm which will, given an input set of n variables, train a team of data scientists to solve your problem.
