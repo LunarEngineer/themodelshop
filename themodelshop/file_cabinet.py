@@ -43,7 +43,7 @@ from typing import (
 
 
 class FileCabinet(fl.FlightServerBase):
-    """Maintains records for *seen* data for a project.
+    """Maintains records and data for a project.
 
     This class is designed to ingest data and serves as a location
     for the secretary to interact with a named dataset. Consider the
@@ -73,9 +73,7 @@ class FileCabinet(fl.FlightServerBase):
     Parameters
     ----------
     location: str = "grpc://0.0.0.0:8815"
-        This is a string telling the file cabinet where to look
-        for data. You can choose to instantiate this with the local
-        host *or* could connect to a persistent server.
+        This is a string denoting the bind address and port to use.
 
     dataset_metadata: Dict
         This is an optional dictionary keyed by dataset name with
@@ -98,14 +96,14 @@ class FileCabinet(fl.FlightServerBase):
         self,
         location: str = "grpc://0.0.0.0:8815",
         dataset_metadata: Dict[str,Dict[str,str]] = None,
-        grpc_on: bool = False
+        grpc_on: bool = False,
         **kwargs
     ):
         # super(FileCabinet, self).__init__(location, **kwargs)
         # Pass these along to the Flight Server Base
-        super().__init__(location, **kwargs)
+        if grpc_on:
+            super().__init__(location, **kwargs)
         # This is going to get populated by the metadata, if passed.
-
         self._named_datasets = {}
         if dataset_metadata is not None:
             self._build_database(dataset_metadata)

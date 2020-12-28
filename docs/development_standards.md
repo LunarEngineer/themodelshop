@@ -17,3 +17,11 @@ That goes for methods as well.
 ## Testing
 
 Before elements of the agent can be committed to master they *must* pass bandit, flake8, mypy, and have 100% code coverage.
+
+## Atomicity
+
+Strive for, as much as possible, classes which have atomic tasks (though possibly complex.) Try not to overlap functionality.
+
+## Documentation
+
+No one gets off with bad documentation. Any documentation added to the repo must pass muster after being examined by multiple people.
