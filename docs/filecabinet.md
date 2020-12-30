@@ -29,12 +29,13 @@ A filing cabinet is an 'in-memory' object store and should be housed on an appro
 
 This function either creates an Apache Flight server, or connects to one, depending on the port.
 
-It also sets the accessors appropriately, meaning that gets and puts are invisibly different.u
+It also sets the accessors appropriately, meaning that gets and puts are invisibly different.
 
+### query(self,ticket=None,**queryArgs)
 
-### query(obj)
+By default, with no additional parameters passed, this returns a metadata dataset of all items available in the filing cabinet, including ticket numbers.
 
-This returns a metadata dataset of all items available in the filing cabinet, including ticket numbers. This also allows for passing 'return type' to overload the desired property return (i.e. the accessor function, or file location, or statistical property. This shares API with the PyArrow query engine in order to filter data as desired.)
+Passing a ticket number will, instead, retrieve
 
 ### get(ticket)
 
