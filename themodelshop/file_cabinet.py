@@ -29,21 +29,52 @@ API
 https://arrow.apache.org/docs/python/api.html
 """
 
+import pandas as pd
 import pyarrow as pa
 import pyarrow.flight as fl
 import numpy as np
 import shutil
+import uuid
 
 from typing import (
     Any,
     Dict
 )
 
-# https://mirai-solutions.ch/news/2020/06/11/apache-arrow-flight-tutorial/
+from themodelshop.utils.data.convertors import standardize as _standardize
 
+# https://mirai-solutions.ch/news/2020/06/11/apache-arrow-flight-tutorial/
+class TicketError(Exception):
+    """Raised for issues with creating or accessing tickets.
+
+    Parameters
+    ----------
+    custom_message: str = None
+        This is a custom message which can be overloaded as necessary.
+    ticket: str = None
+        This is the generated ticket number.
+    """
+    def __init__(self, custom_message:str = None, ticket:str=None):
+        message_header = "TicketError:"
+        if custom_message is None:
+            custom_message = ""
+        if ticket is None:
+            ticket_message = ""
+        else:
+            ticket_message = f"Ticket: {ticket}"
+        message = ('\n\t'.join(message_header,custom_message,ticket_message))
+        self.ticket = ticket
+        self.message = message
+        super().__init__(self.message)
 
 class FileCabinet(fl.FlightServerBase):
     """Maintains records and data for a project.
+
+    A filing cabinet is associated with a workspace. Any workspace.
+    If you don't pass a file location when this is created it
+    assumes that it is in a location where it is appropriate to
+    store data. It checks for and creates a '.data' folder in that
+    case.
 
     This class is designed to ingest data and serves as a location
     for the secretary to interact with a named dataset. Consider the
@@ -52,7 +83,7 @@ class FileCabinet(fl.FlightServerBase):
     creates if necessary) a filing cabinet to maintain records for
     the project.
 
-    The dataset *itself* is also a file in the cabinet.
+    The dataset *itself* is a file in the cabinet.
 
     Any additional training data is also stored as a file in the
     cabinet.
@@ -70,9 +101,18 @@ class FileCabinet(fl.FlightServerBase):
 
     This can spin up a 
 
+    TODO: Implement local, test.
+    TODO: Implement a metadata method listing standardized metadata.
+
     Parameters
     ----------
-    location: str = "grpc://0.0.0.0:8815"
+    location: str = ".data"
+        This is a string denoting the location that the filing
+        cabinet should store information. This will look for Model
+        Shop formatted data in that location and attempt to open all
+        available files.
+
+    address: str = "grpc://0.0.0.0:8815"
         This is a string denoting the bind address and port to use.
 
     dataset_metadata: Dict
@@ -83,123 +123,192 @@ class FileCabinet(fl.FlightServerBase):
         tagged with any experimental results, if appropriate. All
         datasets are defined in terms of *loading functions*.
 
+    Methods
+    -------
+    __init__(location:str=None):
+        Checks for file structure at location, creates if necessary,
+        and plants a cabinet at that location. Writes datasets
+        into that location appropriately. Checks for schema definition
+        at this location and creates a default schema if not
+        available.
+
+    query(**kwargs): This overloads the standard Pandas .query().
+        If no parameters are passed this will return an unfiltered
+        tabular dataset of metadata from all registered objects in
+        this cabinet. If kwargs are passed they are assumed to be
+        filters for data matching. I.e. 'X' is a metadata element.
+        If the keyword expression "X=2" is passed then the internal
+        dataset of metadata is queried using Pandas DataFrame.query().
+        If the feature of the metadata does not exist then a MetaDataError
+        is thrown.
+
+        https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html
+
+    put(something): This adds an item to the filing cabinet and
+        ensures that the metadata matches the appropriate schema.
+        This is using appropriate file or variable handling
+        functions which are loaded from the file_cabinet
+        utilities to allow storing an item appropriately.
+
+    register(open=True,**kwargs): This takes the datasets identified
+        by this .query(**kwargs) and changes their registration status
+        to 'open'. This will throw a 'QueryTooNarrow' error if no
+        datasets are identified.
+
+    get(**kwargs): This takes the dataset identified by this
+        .query(**kwargs) and services a get request by returning the
+        information. This is using appropriate file or variable
+        handling functions which are loaded from the file_cabinet
+        utilities to allow returning an item appropriately.
+
+    open(**kwargs): This uses appropriate handling techniques to
+        read the datasets identified by this .query(**kwargs) and
+        ensure they are available for get operations. This will
+        throw a QueryTooNarrow error if no datasets are identified.
+
+    close(**kwargs): This uses appropriate handling techniques to
+        write the datasets identified by this .query(**kwargs) and
+        ensure their open status is set to false. This will throw a
+        QueryTooNarrow error if no datasets are identified.
+
     Returns
     -------
     file_cabinet: FileCabinet
         A filing cabinet which can be queried for information.
     """
-    # Some developer notes here:
-    # _named_datasets is a dictionary to be used by the FileCabinet
-    #   in order to *pull* and instantiate the data. Each of these
-    #   will contain the hooks the Fil
     def __init__(
         self,
-        location: str = "grpc://0.0.0.0:8815",
-        dataset_metadata: Dict[str,Dict[str,str]] = None,
-        grpc_on: bool = False,
+        location: str = ".data",
+        address: str = "grpc://0.0.0.0:8815",
+        #grpc_on: bool = False,
+        name: str = None,
         **kwargs
     ):
-        # super(FileCabinet, self).__init__(location, **kwargs)
-        # Pass these along to the Flight Server Base
-        if grpc_on:
-            super().__init__(location, **kwargs)
-        # This is going to get populated by the metadata, if passed.
-        self._named_datasets = {}
-        if dataset_metadata is not None:
-            self._build_database(dataset_metadata)
+        # TODO: Think about this, should I embed the capability to
+        # turn grpc off?
+        super().__init__(address, **kwargs)
+        # The internal dataset should be PyArrow?
+        self._data = {}
+        self._metadata = {}
+        # This is an identifier for this cabinet.
+        self._name = name
+        if name is None:
+            self._uuid = uuid.uuid1()
+        else:
+            uuid.uuid3(uuid.NAMESPACE_DNS, self._name)
 
-    def _build_database(
-        self,
-        metadata: Dict[str,Dict[str,Any]]
-    ):
-        """Builds appropriate data structures for named data
+    def query(self, **kwargs: Any):
+        """Retrieve filterable metadata for internal datasets.
 
-        This operates similarly to a feature store. You define a
-        named dataset, or a connection to something which populates
-        named datasets, and this will pull that data and place it
-        into the feature store.
+        This is a function that will return, if no parameters are
+        passed, an unfiltered dataset of dataset metadata. This can
+        also be passed filter criteria in order to return tailored
+        information. These are **exact** filter criteria, meaning
+        that if you call:
+
+        ```python
+        file_cabinet.query(x=2,y=3)
+
+        """
+        # TODO: Change this syntax to the appropriate effect.
+        # This will likely need some further work, but it will
+        # work as a placeholder.
+        query_str = ["f{k} == {v}" for k,v in kwargs.items()]
+        return pd.DataFrame(self._metadata).query(*query_str)
+
+    def _handle(rw:str='r',obj:Any=None):
+        """Read or write a file appropriately.
+
+        If the read/write parameter is set to read then the object is
+        assumed to be a string and this will then attempt to pull that
+        item.
 
         Parameters
         ----------
-        metadata: Dict[str,Dict[str,Any]]
-            This is a dictionary, keyed by dataset name, with values
-            of dictionaries expecting to see a few key parameters.
-            An example of this would be:
-
-            ```python
-            project_datasets = {
-                'specific_raw_data': {
-                    'loading_function': 'get_sql',
-                    'function_arguments': {
-                        'sql_string': 'Silly arbitrary select statements'
-                    }
-                },
-                'some_transformed_data': {
-                    'loading_function': 'get_s3',
-                    'function_arguments': {
-                        's3_path': 's3://bucket/with/prefix'
-                    }
-                }
-            }
-            ```
+        rw: str = 'r'
+            'r': Read
+            'w': Write
+            'd': Delete
         """
-        # We're going to add the datasets to the internal store, one
-        #   at a time.
-        for named_dataset in metadata.keys():
-            _load_function = metadata[named_dataset]['loading_function']
-            _load_function_args = metadata[named_dataset]['function_arguments']
-            _hook = self._scrape_hook(_load_function,_load_function_args)
-            self._named_datasets[named_dataset] = _hook
-        
+        pass
+    def _put(self,data):
+        """Files a thing into the cabinet.
 
-    def _scrape_hook(
-        function_name: str,
-        function_kwargs: Dict[str,Any]
-    ):
-        # TODO: Use inspect to scrape functions from named user modules.
-        # TODO: This needs to pull the function from the data utils
-        function = None
-        # Get that function and return it as a lambda function.
+        This will place an item into storage and will return the
+        necessary metadata to retrieve the data upon request.
+        """
+        # Generate a unique identifier for the data.
+        _ticket = uuid.uuid1()
+        # This will blow up if the data cannot be cast to PyArrow.
+        _data = _standardize(data)
+        # At this point the data is PyArrow format.
+        # self.tables[ticket_name] = reader.read_all()
+
+        return _ticket
+
+    def _get(self):
+        """Get a thing from the cabinet.
+
+        This will get an item from storage, regardless of cabinet
+        location, as long as the information is available (i.e.
+        registered or available locally.)
+        """
         raise NotImplementedError
 
-    def do_get(self, context, ticket):
-        """Fetch a dataset
+    def register(self,data:Any,metadata:Dict[str,str]):
+        """Register a dataset.
+
+        This publishes an item in the cabinet, marking it as
+        available. By default this will create a dissemination mask
+        empty for all users aside from the current cabinet.
 
         Parameters
         ----------
-        context: unknown
-        ticket: unknown
+        data: Any
+            This is the object to store in the cabinet.
+        metadata: Dict[str,str]
+            This is a dictionary of standardized metadata fields.
+            For more information call the metadata method.
+
+        Returns
+        -------
+        ticket: str
+            This is the unique identifier in this cabinet which is
+            used to identify this dataset.
         """
-        table = self.tables[ticket.ticket]
-        return fl.RecordBatchStream(table)
+        
+        # Attempt to publish the data.
+        ticket = self._put(data)
+        try:
+            self._put(data)
+        try:
+            self._metadata[_ticket] = metadata
+            self._data[_ticket] = data
+        except:
+            raise TicketError("Unable to add.")
 
-    def _get():
-        pass
-    def _put():
-        pass
+    def open(self):
+        """Opens a closed cabinet.
 
-    # def file(self):
-    #     silly_file_name = ''
-    #     self._files[silly_file_name] = File()
+        Opening a cabinet will check the branch workspace for a
+        cabinet (if it exists in metadata already) and make available
+        all information in this workspace by registering persistent
+        datasets. Each filing cabinet is associated with a UUID and
+        as a result cabinets can be opened and closed at will to
+        allow for projects to easily be cleaned up and instantiated.
+        """
+        raise NotImplementedError
 
-    # def close(self):
-    #     """Closes a filing cabinet
-    #     Ensures that any temporary data is written, sets all
-    #     in-memory data to None.
-    #     """
-    #     # 1) Archive everything
-    #     'shutil.make_archive'
-    #     raise NotImplementedError
-    # def open(self):
-    #     'shutil.unpack_archive'
-    # def _destroy(self,are_you_sure:bool=False):
-    #     """Deletes a filing cabinet
-    #     Removes the entire filing cabinet.
-    #     """
-    #     if are_you_sure:
-    #         shutil.rmtree(self._filepath)
-    # def cabinet_usage(self):
-    #     shutil.disk_usage(self._filepath)
+    def close(self):
+        """Closes an open cabinet.
+
+        Write all workspace specific non-temporary datasets to disk
+        if required. Delete all temporary datasets in this workspace
+        from metadata. Publish all persistent information to higher
+        level cabinets, if that information is in use elsewhere.
+        """
+        raise NotImplementedError
+
 
 def main():
     FileCabinet().serve()

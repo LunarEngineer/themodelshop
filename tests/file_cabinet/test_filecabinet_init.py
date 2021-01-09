@@ -1,6 +1,7 @@
 import pytest
 from themodelshop.file_cabinet import FileCabinet
 
+@pytest.mark.unit
 def test_null_init():
     # What is this going to do?
     # This is going to test the init routine
@@ -8,11 +9,14 @@ def test_null_init():
     cabinet = FileCabinet()
     #2) Check for... stuff!
     required_attr = {
-        '_build_database': None,
         '_get': None,
-        '_named_datasets': None,
         '_put': None,
-        '_scrape_hook': None,
+        'get': None,
+        'put': None,
+        'register': None,
+        'query': None,
+        'open': None,
+        'close': None,
         'do_action': None,
         'do_exchange': None,
         'do_get': None,
@@ -32,3 +36,4 @@ def test_null_init():
             raise AttributeError(f"Filing cabinet is missing {attr}")
 
 def test_serve():
+    cabinet = FileCabinet()
